@@ -21,11 +21,14 @@ jobs:
         distribution: 'temurin'
         
     - name: Cache Maven dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
+        
+    - name: Make Maven wrapper executable
+      run: chmod +x ./mvnw
         
     - name: Build with Maven
       run: ./mvnw clean compile -DskipTests
@@ -38,7 +41,7 @@ jobs:
       run: ./mvnw package -DskipTests
       
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: jar-artifact
         path: target/*.jar
@@ -57,12 +60,3 @@ jobs:
       
     - name: Build Docker image
       run: docker build -t mixit-api:${{ github.sha }} .
-      
-    - name: Save Docker image
-      run: docker save mixit-api:${{ github.sha }} > mixit-api.tar
-      
-    - name: Upload Docker image
-      uses: actions/upload-artifact@v3
-      with:
-        name: docker-image
-        path: mixit-api.tar
