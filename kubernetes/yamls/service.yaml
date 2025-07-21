@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: recime-backend-service
+  namespace: mixit
+  labels:
+    app: recime-backend
+spec:
+  selector:
+    app: recime-backend
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: recime-backend-ingress
+  namespace: mixit
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.recime-app.com
+      secretName: recime-tls-secret
+  rules:
+    - host: api.recime-app.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: recime-backend-service
+                port:
+                  number: 80

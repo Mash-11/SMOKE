@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Configuration;
         ),
         servers = {
                 @Server(url = "http://localhost:8080", description = "Local Development Server"),
-                // Add more server URLs for production, staging, etc., as needed
+                @Server(url = "https://api.recime-app.com", description = "Production Server")
         }
 )
 @SecurityScheme(

@@ -31,6 +31,10 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        // --- CRITICAL: Ensure /actuator/** is permitted FIRST ---
+                        .requestMatchers("/actuator/**").permitAll()
+                        // Ensure /error is also permitted as health checks can sometimes redirect there
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers(
                                 "/auths/**",
                                 "/login/**",
@@ -55,7 +59,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .httpBasic(Customizer.withDefaults()); // Keep httpBasic for potential fallback/testing
+                .httpBasic(httpBasic -> httpBasic.disable()); // Disable HTTP Basic Authentication to prevent browser prompts
         return http.build();
     }
 

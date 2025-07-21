@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mixit-config
+  namespace: mixit
+data:
+  SPRING_APPLICATION_NAME: "RecimeClone"
+  MONGO_DB_DATABASE: "recipe-api-db"
+  APP_LOGO_URL: "https://res.cloudinary.com/dvkfxnpqp/image/upload/v1750853275/BLANC_MIXIT_mesa3w.png"
+  APPLICATION_SECURITY_JWT_EXPIRATION: "86400000"
+
+  # Spring Boot Actuator and Health Configuration
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics"
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "when-authorized"
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+  MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED: "true"
+  MANAGEMENT_HEALTH_READINESSSTATE_ENABLED: "true"
+
+  # Disable problematic health indicators in Kubernetes
+  MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
+  MANAGEMENT_HEALTH_MONGO_ENABLED: "true"
+
+  # MongoDB connection timeouts
+  SPRING_DATA_MONGODB_CONNECTION_TIMEOUT: "5000"
+  SPRING_DATA_MONGODB_SOCKET_TIMEOUT: "3000"
+
+  # Logging configuration
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_BOOT_ACTUATE: "INFO"
+  LOGGING_LEVEL_ROOT: "INFO"

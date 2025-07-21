@@ -1,0 +1,228 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recime-backend
+  namespace: mixit
+  labels:
+    app: recime-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: recime-backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: recime-backend
+    spec:
+      containers:
+        - name: recime-backend
+          image: mafful7/recime-backend:fresh-v3
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "768Mi"
+              cpu: "500m"
+            limits:
+              memory: "1.5Gi"
+              cpu: "750m"
+          env:
+            # MongoDB Configuration
+            - name: MONGO_DB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: uri
+            - name: MONGO_DB_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: mixit-config
+                  key: MONGO_DB_DATABASE
+
+            # Application Configuration
+            - name: SPRING_APPLICATION_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: mixit-config
+                  key: SPRING_APPLICATION_NAME
+            - name: APP_LOGO_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: mixit-config
+                  key: APP_LOGO_URL
+
+            # Health and Actuator Configuration
+            - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+              valueFrom:
+                configMapKeyRef:
+                  name: mixit-config
+                  key: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+            - name: MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS
+              valueFrom:
+                configMapKeyRef:
+                  name: mixit-config
+                  key: MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS
+            - name: MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: mixit-config
+                  key: MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED
+            - name: MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: mixit-config
+                  key: MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED
+            - name: MANAGEMENT_HEALTH_READINESSSTATE_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: mixit-config
+                  key: MANAGEMENT_HEALTH_READINESSSTATE_ENABLED
+            - name: MANAGEMENT_HEALTH_MAIL_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: mixit-config
+                  key: MANAGEMENT_HEALTH_MAIL_ENABLED
+            - name: MANAGEMENT_HEALTH_MONGO_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: mixit-config
+                  key: MANAGEMENT_HEALTH_MONGO_ENABLED
+            - name: SPRING_DATA_MONGODB_CONNECTION_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: mixit-config
+                  key: SPRING_DATA_MONGODB_CONNECTION_TIMEOUT
+            - name: SPRING_DATA_MONGODB_SOCKET_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: mixit-config
+                  key: SPRING_DATA_MONGODB_SOCKET_TIMEOUT
+
+            # Cloudinary Configuration
+            - name: CLOUDINARY_CLOUD_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: cloudinary-secret
+                  key: cloud-name
+            - name: CLOUDINARY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cloudinary-secret
+                  key: api-key
+            - name: CLOUDINARY_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: cloudinary-secret
+                  key: api-secret
+
+            # JWT Configuration
+            - name: APPLICATION_SECURITY_JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: secret
+            - name: APPLICATION_SECURITY_JWT_EXPIRATION
+              valueFrom:
+                configMapKeyRef:
+                  name: mixit-config
+                  key: APPLICATION_SECURITY_JWT_EXPIRATION
+
+            # Gmail Configuration
+            - name: GMAIL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: gmail-secret
+                  key: GMAIL_HOST
+            - name: GMAIL_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: gmail-secret
+                  key: GMAIL_PORT
+            - name: GMAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: gmail-secret
+                  key: GMAIL_USERNAME
+            - name: GMAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: gmail-secret
+                  key: GMAIL_PASSWORD
+            - name: GMAIL_SMTP_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: gmail-secret
+                  key: GMAIL_SMTP_AUTH
+            - name: GMAIL_SMTP_SSL_ENABLE
+              valueFrom:
+                secretKeyRef:
+                  name: gmail-secret
+                  key: GMAIL_SMTP_SSL_ENABLE
+            - name: GMAIL_SMTP_SSL_REQUIRED
+              valueFrom:
+                secretKeyRef:
+                  name: gmail-secret
+                  key: GMAIL_SMTP_SSL_REQUIRED
+            - name: GMAIL_SMTP_CONNECTIONTIMEOUT
+              valueFrom:
+                secretKeyRef:
+                  name: gmail-secret
+                  key: GMAIL_SMTP_CONNECTIONTIMEOUT
+            - name: GMAIL_SMTP_TIMEOUT
+              valueFrom:
+                secretKeyRef:
+                  name: gmail-secret
+                  key: GMAIL_SMTP_TIMEOUT
+            - name: GMAIL_SMTP_WRITETIMEOUT
+              valueFrom:
+                secretKeyRef:
+                  name: gmail-secret
+                  key: GMAIL_SMTP_WRITETIMEOUT
+            - name: GMAIL_MAIL_DEBUG
+              valueFrom:
+                secretKeyRef:
+                  name: gmail-secret
+                  key: GMAIL_MAIL_DEBUG
+
+          # Startup probe - for slow-starting applications
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 12  # Allow up to 2 minutes for startup
+            successThreshold: 1
+
+          # Readiness probe - when app is ready to receive traffic
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+
+          # Liveness probe - when app should be restarted
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+
+      imagePullSecrets:
+        - name: dockerhub-secret

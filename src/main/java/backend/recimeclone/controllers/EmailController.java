@@ -1,6 +1,8 @@
 package backend.recimeclone.controllers;
 
-import backend.recimeclone.service.EmailService; // Import your EmailService
+import backend.recimeclone.service.EmailService; 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -10,6 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RestController
 @RequestMapping("/mail")
 public class EmailController {
+
+   // Logger for this class
+   private static final Logger logger = LoggerFactory.getLogger(EmailController.class);
 
    // Inject the EmailService instead of JavaMailSender directly
    private final EmailService emailService;
@@ -36,7 +41,7 @@ public class EmailController {
          );
          return "SUCCESS: Test email sent via service";
       } catch (Exception e) {
-         System.err.println("Error sending test email: " + e.getMessage());
+         logger.error("Error sending test email: {}", e.getMessage(), e);
          return "ERROR: " + e.getMessage();
       }
    }
@@ -53,7 +58,7 @@ public class EmailController {
          emailService.sendOtpEmail(to, otp);
          return " OTP sent to " + to;
       } catch (Exception e) {
-         System.err.println("Error sending OTP email: " + e.getMessage());
+         logger.error("Error sending OTP email: {}", e.getMessage(), e);
          return " OTP failed: " + e.getMessage();
       }
    }
