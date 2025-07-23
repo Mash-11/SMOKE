@@ -36,7 +36,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: jar-artifact
-          path: target/  # Download to target directory to match Dockerfile expectation
+          path: target/
       - name: List files to debug
         run: ls -la target/
       - name: Log in to Container Registry
