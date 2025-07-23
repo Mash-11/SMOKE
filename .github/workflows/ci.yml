@@ -1,62 +1,62 @@
+# .github/workflows/ci.yml
 name: Mixit API v2 CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        
-    - name: Cache Maven dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-        
-    - name: Make Maven wrapper executable
-      run: chmod +x ./mvnw
-        
-    - name: Build with Maven
-      run: ./mvnw clean compile -DskipTests
-      
-    - name: Run tests (if any)
-      run: ./mvnw test
-      continue-on-error: true
-      
-    - name: Build JAR
-      run: ./mvnw package -DskipTests
-      
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: jar-artifact
-        path: target/*.jar
+      - uses: actions/checkout@v4
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: ./mvnw clean package -DskipTests
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jar-artifact
+          path: target/*.jar # This needs to match the actual path to your JAR
 
   docker-build:
-    needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    
+    needs: build-and-test # This ensures build-and-test completes first
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      
-    - name: Build Docker image
-      run: docker build -t mixit-api:${{ github.sha }} .
+      - uses: actions/checkout@v4
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: jar-artifact
+          path: . # Download the artifact to the root of the workspace.
+                  # This means your JAR will be directly in the workspace.
+                  # If your Dockerfile expects it in 'target/', you might need:
+                  # path: target/
+                  # and then ensure 'target' directory exists before downloading
+
+      - name: List files to debug (Optional)
+        run: ls -R
+
+      - name: Build and Push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+          # If your JAR is directly in the root, and named 'your-app.jar',
+          # then your Dockerfile's COPY target/*.jar app.jar
+          # will still fail. You'd need to adjust Dockerfile to:
+          # COPY your-app.jar app.jar
+          # Or, if you downloaded to 'target/', ensure Dockerfile is
+          # COPY target/*.jar app.jar
