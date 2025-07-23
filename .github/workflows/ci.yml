@@ -1,11 +1,9 @@
 # .github/workflows/ci.yml
 name: Mixit API v2 CI/CD Pipeline
-
 on:
   push:
     branches:
       - main
-
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -17,34 +15,34 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
           cache: 'maven'
-
       - name: Build with Maven
         run: ./mvnw clean package -DskipTests
-
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: jar-artifact
-          path: target/*.jar # This needs to match the actual path to your JAR
-
+          path: target/*.jar
+          
   docker-build:
     runs-on: ubuntu-latest
-    needs: build-and-test # This ensures build-and-test completes first
+    needs: build-and-test
     steps:
       - uses: actions/checkout@v4
+      - name: Create target directory
+        run: mkdir -p target
       - name: Download JAR artifact
         uses: actions/download-artifact@v4
         with:
           name: jar-artifact
-          path: . # Download the artifact to the root of the workspace.
-                  # This means your JAR will be directly in the workspace.
-                  # If your Dockerfile expects it in 'target/', you might need:
-                  # path: target/
-                  # and then ensure 'target' directory exists before downloading
-
-      - name: List files to debug (Optional)
-        run: ls -R
-
+          path: target/  # Download to target directory to match Dockerfile expectation
+      - name: List files to debug
+        run: ls -la target/
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and Push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -54,9 +52,3 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.sha }}
-          # If your JAR is directly in the root, and named 'your-app.jar',
-          # then your Dockerfile's COPY target/*.jar app.jar
-          # will still fail. You'd need to adjust Dockerfile to:
-          # COPY your-app.jar app.jar
-          # Or, if you downloaded to 'target/', ensure Dockerfile is
-          # COPY target/*.jar app.jar
