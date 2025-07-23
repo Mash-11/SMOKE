@@ -40,6 +40,8 @@ public class SecurityConfig {
                                 "/login/**",
                                 "/public/**",
                                 "/verifyOtp/**",
+                                "/api/v1/recipe-scraper/extract",
+                                "/api/v1/recipe-scraper/extract-text",
                                 "/register/**",
                                 "/media/**",
                                 "/api/v1/recipes",

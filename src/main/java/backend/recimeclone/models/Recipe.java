@@ -30,9 +30,9 @@ public class Recipe {
 
     private List<String> methods ;
 
-    private int PrepTime;
+    private int prepTime;
 
-    private int CookTime;
+    private int cookTime;
 
     private LocalDateTime creationDate;
 
